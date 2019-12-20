@@ -12,3 +12,8 @@ Some considerations for each of the above ideas:
 * Using [BCC](https://github.com/iovisor/bcc) should be almost as fun as writing a kernel module, but will be much more restrictive in terms of what we can do in the kernel-space (so less chance of shooting ourself in the foot :D). Transporting data out of the eBPF program will probably take some research.
 * Mimicking `tcpdump` will probably be the easiest way to go, there should be more resources on how to capture TCP packets the `tcpdump` way; it will, however, probably be the least efficient of them of them all (and that may be fine)
 
+
+## Reference
+
+* [Socket Programming in C/C++](https://www.geeksforgeeks.org/socket-programming-cc/)
+* [The Sniffer's Guide to Raw Traffic](http://yuba.stanford.edu/~casado/pcap/section1.html)
