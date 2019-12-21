@@ -23,37 +23,6 @@ void signal_handler(__attribute__((unused)) int sig) {
 	capturing = 0;
 }
 
-void packet_handler(FILE *fd, const struct pcap_pkthdr *pcap_header, const u_char *data) {
-	struct ether_header *eth_header;
-	struct iphdr *ip_header;
-	struct tcphdr *tcp_header;
-	char *payload, *end;
-
-	if (pcap_header->caplen < sizeof(struct ether_header))
-		return;
-
-	/* For better performance we could use pcap_compile to filter
-	 * packet in kernel-space. */
-	eth_header = (struct ether_header *) data;
-	/* TODO: Work with IPv6 */
-	if (!is_ipv4(eth_header))
-		return;
-
-	ip_header = (struct iphdr *) (data + sizeof(struct ether_header));
-	if (!is_tcp(ip_header))
-		return;
-
-	tcp_header = (struct tcphdr *) ((char *)ip_header + ip_header->ihl * 4);
-	payload = tcp_payload(tcp_header);
-	end = end_of_ip(ip_header);
-	if (payload >= end)
-		return; /* No payload */
-	if (end > (char *) data + pcap_header->caplen)
-		return; /* XXX: Skip cases where we did not capture the whole packet */
-
-	fwrite(payload, sizeof(char), end - payload, fd);
-}
-
 void sniff(pcap_t *handle, FILE *fd) {
 	int retval;
 	struct pcap_pkthdr *pcap_header;
@@ -67,7 +36,7 @@ void sniff(pcap_t *handle, FILE *fd) {
 			fprintf(stderr, "Failed to retrieve packet, error code: %d\n", retval);
 			return;
 		}
-		packet_handler(fd, pcap_header, data);
+		packet_handler(fd, pcap_header, data, fwrite);
 	}
 	printf("\nStopped sniffing!\n");
 }
