@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 
-bool is_ip(const struct ether_header *eth_header) {
+bool is_ipv4(const struct ether_header *eth_header) {
 	return ntohs(eth_header->ether_type) == ETHERTYPE_IP;
 }
 

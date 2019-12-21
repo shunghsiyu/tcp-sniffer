@@ -35,7 +35,8 @@ void packet_handler(FILE *fd, const struct pcap_pkthdr *pcap_header, const u_cha
 	/* For better performance we could use pcap_compile to filter
 	 * packet in kernel-space. */
 	eth_header = (struct ether_header *) data;
-	if (!is_ip(eth_header))
+	/* TODO: Work with IPv6 */
+	if (!is_ipv4(eth_header))
 		return;
 
 	ip_header = (struct iphdr *) (data + sizeof(struct ether_header));

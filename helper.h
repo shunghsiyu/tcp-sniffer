@@ -9,7 +9,7 @@
 #include <netinet/tcp.h>
 
 
-bool is_ip(const struct ether_header *eth_header);
+bool is_ipv4(const struct ether_header *eth_header);
 bool is_tcp(const struct iphdr *ip_header);
 char *end_of_ip(const struct iphdr *ip_header);
 char *tcp_payload(const struct tcphdr *tcp_header);

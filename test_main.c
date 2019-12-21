@@ -6,12 +6,12 @@
 #include "fixture.h"
 
 
-START_TEST(test_is_ip_udp) {
-	ck_assert(is_ip((struct ether_header *) TEST_FIXTURE_UDP));
+START_TEST(test_is_ipv4_udp) {
+	ck_assert(is_ipv4((struct ether_header *) TEST_FIXTURE_UDP));
 } END_TEST
 
-START_TEST(test_is_ip_tcp) {
-	ck_assert(is_ip((struct ether_header *) TEST_FIXTURE_TCP));
+START_TEST(test_is_ipv4_tcp) {
+	ck_assert(is_ipv4((struct ether_header *) TEST_FIXTURE_TCP));
 } END_TEST
 
 START_TEST(test_is_tcp_udp) {
@@ -40,8 +40,8 @@ int main(void) {
 
 	s = suite_create("main");
 	tc = tcase_create("all");
-	tcase_add_test(tc, test_is_ip_udp);
-	tcase_add_test(tc, test_is_ip_tcp);
+	tcase_add_test(tc, test_is_ipv4_udp);
+	tcase_add_test(tc, test_is_ipv4_tcp);
 	tcase_add_test(tc, test_is_tcp_udp);
 	tcase_add_test(tc, test_is_tcp_tcp);
 	tcase_add_test(tc, test_end_of_ip_tcp);
