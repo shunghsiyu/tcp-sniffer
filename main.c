@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -15,6 +16,12 @@
 
 const int PCAP_BUFFER_SIZE = 65536;
 
+static volatile sig_atomic_t capturing = 1;
+
+
+void signal_handler(__attribute__((unused)) int sig) {
+	capturing = 0;
+}
 
 void sniff(pcap_t *handle, FILE *fd) {
 	int retval;
@@ -26,16 +33,18 @@ void sniff(pcap_t *handle, FILE *fd) {
 	char *payload, *end;
 
 	printf("Start sniffing!\n");
-	for (int count = 10; count > 0;) {
+	while (capturing) {
 		retval = pcap_next_ex(handle, &pcap_header, &data);
 		if (retval != 1) {
-			fprintf(stderr, "Failed to capture packet, error code: %d\n", retval);
+			fprintf(stderr, "Failed to retrieve packet, error code: %d\n", retval);
 			return;
 		}
 
 		if (pcap_header->caplen < sizeof(struct ether_header))
 			continue;
 
+		/* For better performance we could use pcap_compile to filter
+		 * packet in kernel-space. */
 		eth_header = (struct ether_header *) data;
 		if (!is_ip(eth_header))
 			continue;
@@ -51,9 +60,15 @@ void sniff(pcap_t *handle, FILE *fd) {
 			continue; /* No payload */
 
 		fwrite(payload, sizeof(char), end - payload, fd);
-		count--;
 	}
-	printf("Stopped sniffing!\n");
+	printf("\nStopped sniffing!\n");
+}
+
+void install_signal_handler(void) {
+	struct sigaction signal_action = {
+		.sa_handler = signal_handler,
+	};
+	sigaction(SIGINT, &signal_action, NULL);
 }
 
 int main(int argc, char *argv[]) {
@@ -98,6 +113,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	fd = fopen(argv[2], "wb");
+	install_signal_handler();
 	sniff(handle, fd);
 	fclose(fd);
 	pcap_close(handle);
