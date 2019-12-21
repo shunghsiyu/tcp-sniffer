@@ -58,6 +58,8 @@ void sniff(pcap_t *handle, FILE *fd) {
 		end = end_of_ip(ip_header);
 		if (payload >= end)
 			continue; /* No payload */
+		if (end > (char *) data + pcap_header->caplen)
+			continue; /* XXX: Skip cases where we did not capture the whole packet */
 
 		fwrite(payload, sizeof(char), end - payload, fd);
 	}
