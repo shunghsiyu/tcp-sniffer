@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
 #include <netinet/if_ether.h>
@@ -12,7 +16,7 @@
 const int PCAP_BUFFER_SIZE = 65536;
 
 
-void sniff(pcap_t *handle) {
+void sniff(pcap_t *handle, FILE *fd) {
 	int retval;
 	struct pcap_pkthdr *pcap_header;
 	const u_char *data;
@@ -46,12 +50,7 @@ void sniff(pcap_t *handle) {
 		if (payload >= end)
 			continue; /* No payload */
 
-		printf("Payload size: %d\n", (int) (end - payload));
-		for (char *ptr = payload; ptr < end; ptr++) {
-			printf("%02X", *ptr);
-		}
-		printf("\n");
-
+		fwrite(payload, sizeof(char), end - payload, fd);
 		count--;
 	}
 	printf("Stopped sniffing!\n");
@@ -64,14 +63,18 @@ int main(int argc, char *argv[]) {
 	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t *handle;
 	int linktype;
+	FILE *fd;
 
 	if (argc < 2) {
-		fprintf(stderr, "Please supply device name!\n");
+		fprintf(stderr, "Please supply device name and output file!\n");
+		exit(1);
+	} else if (argc < 3) {
+		fprintf(stderr, "Please supply output file!\n");
 		exit(1);
 	}
 
 	dev = argv[1];
-	printf("Device: %s\n", dev);
+	fprintf(stderr, "Device: %s\n", dev);
 
 	retval = pcap_lookupnet(dev, &ip, &mask, errbuf);
 	if (retval == -1) {
@@ -79,7 +82,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	printf("IP: 0x%X, Mask: 0x%X\n", ntohl(ip), ntohl(mask));
+	fprintf(stderr, "IP: 0x%X, Mask: 0x%X\n", ntohl(ip), ntohl(mask));
 
 	handle = pcap_open_live(dev, PCAP_BUFFER_SIZE, 0, 100, errbuf);
 	if (handle == NULL) {
@@ -90,10 +93,13 @@ int main(int argc, char *argv[]) {
 	linktype = pcap_datalink(handle);
 	if (linktype != 1) {
 		fprintf(stderr, "Unsupported link-type %d", linktype);
+		pcap_close(handle);
 		exit(1);
 	}
 
-	sniff(handle);
+	fd = fopen(argv[2], "wb");
+	sniff(handle, fd);
+	fclose(fd);
 	pcap_close(handle);
 
 	exit(0);
