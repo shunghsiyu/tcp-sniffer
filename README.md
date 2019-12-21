@@ -25,4 +25,6 @@ Testing libraries:
 
 * [Socket Programming in C/C++](https://www.geeksforgeeks.org/socket-programming-cc/)
 * [The Sniffer's Guide to Raw Traffic](http://yuba.stanford.edu/~casado/pcap/section1.html)
+* [Stripping layer 2 in pcap](https://idea.popcount.org/2013-01-29-stripping-layer-2-in-pcap/)
+* [fffaraz/lsniffer.c](https://gist.github.com/fffaraz/7f9971463558e9ea9545)
 * [CS5600: Introduction to Unit Testing C code with Check](http://www.ccs.neu.edu/home/skotthe/classes/cs5600/fall/2015/labs/intro-check.html)
