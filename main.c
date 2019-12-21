@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
+#include "helper.h"
 
 const int PCAP_BUFFER_SIZE = 1024;
 
@@ -23,31 +25,18 @@ void sniff(pcap_t *handle, const int data_offset) {
 			return;
 		}
 
-		printf("Length of packet: %d\n", pcap_header->len);
 		if ((int) pcap_header->caplen < data_offset)
-			return;
-		eth_header = (struct ether_header *) data;
-		printf("Source MAC address: ");
-		for (int i = 0; i < ETHER_ADDR_LEN; i++) {
-			printf("%02X", eth_header->ether_dhost[i]);
-		}
-		printf("\n");
-		printf("Destination MAC address: ");
-		for (int i = 0; i < ETHER_ADDR_LEN; i++) {
-			printf("%02X", eth_header->ether_shost[i]);
-		}
-		printf("\n");
+			continue;
 
-		retval = ntohs(eth_header->ether_type);
-		printf("Ethernet packet type: 0x%X\n", retval);
-		if (retval != ETHERTYPE_IP) {
-			fprintf(stderr, "Unsupported ethernet packet type %d", retval);
+		eth_header = (struct ether_header *) data;
+		if (!is_ip(eth_header)) {
+			continue;
 		}
 
 		ip_header = (struct iphdr *) (data + data_offset);
-		printf("Source IP: %X\n", ntohl(ip_header->saddr));
-		printf("Destination IP: %X\n", ntohl(ip_header->daddr));
-		printf("Protocol: 0x%X\n", (unsigned int) ip_header->protocol);
+		if (!is_tcp(ip_header)) {
+			continue;
+		}
 	}
 	printf("Stopped sniffing!\n");
 }
