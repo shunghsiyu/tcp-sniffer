@@ -13,7 +13,16 @@ Some considerations for each of the above ideas:
 * Mimicking `tcpdump` will probably be the easiest way to go, there should be more resources on how to capture TCP packets the `tcpdump` way; it will, however, probably be the least efficient of them of them all (and that may be fine)
 
 
+## Requirements
+
+Runtime libraries:
+* Pcap
+
+Testing libraries:
+* Check
+
 ## Reference
 
 * [Socket Programming in C/C++](https://www.geeksforgeeks.org/socket-programming-cc/)
 * [The Sniffer's Guide to Raw Traffic](http://yuba.stanford.edu/~casado/pcap/section1.html)
+* [CS5600: Introduction to Unit Testing C code with Check](http://www.ccs.neu.edu/home/skotthe/classes/cs5600/fall/2015/labs/intro-check.html)
