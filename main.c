@@ -25,13 +25,14 @@ void signal_handler(__attribute__((unused)) int sig) {
 	pcap_breakloop(handle);
 }
 
-void sniff(pcap_t *handle, FILE *fd) {
+void sniff(pcap_t *handle, FILE *fd, long int max_packets) {
 	int retval;
 	struct pcap_pkthdr *pcap_header;
 	const u_char *data;
+	long int count = 0L;
 
-	printf("Start sniffing!\n");
-	while (capturing) {
+	fprintf(stderr, "Start sniffing!\n");
+	while (capturing && (max_packets <= 0 || (max_packets > 0 && count < max_packets))) {
 		/* We could also use pcap_dispatch() or pcap_loop() */
 		retval = pcap_next_ex(handle, &pcap_header, &data);
 		if (retval == -2) {
@@ -40,9 +41,9 @@ void sniff(pcap_t *handle, FILE *fd) {
 			fprintf(stderr, "Failed to retrieve packet, error code: %d\n", retval);
 			return;
 		}
-		packet_handler(fd, pcap_header, data, fwrite);
+		count += packet_handler(fd, pcap_header, data, fwrite);
 	}
-	printf("\nStopped sniffing!\n");
+	fprintf(stderr, "\nStopped sniffing! Got %ld packets\n", count);
 }
 
 void install_signal_handler(void) {
@@ -59,6 +60,7 @@ int main(int argc, char *argv[]) {
 	char errbuf[PCAP_ERRBUF_SIZE];
 	int linktype;
 	FILE *fd;
+	long int max_packet_count;
 
 	if (argc < 2) {
 		fprintf(stderr, "Please supply device name and output file!\n");
@@ -66,6 +68,10 @@ int main(int argc, char *argv[]) {
 	} else if (argc < 3) {
 		fprintf(stderr, "Please supply output file!\n");
 		exit(1);
+	} else if (argc < 4) {
+		max_packet_count = -1;
+	} else {
+		max_packet_count = strtol(argv[3], NULL, 10);
 	}
 
 	dev = argv[1];
@@ -94,7 +100,7 @@ int main(int argc, char *argv[]) {
 
 	fd = fopen(argv[2], "wb");
 	install_signal_handler();
-	sniff(handle, fd);
+	sniff(handle, fd, max_packet_count);
 	fclose(fd);
 	pcap_close(handle);
 
