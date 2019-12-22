@@ -24,14 +24,13 @@ function remove_tmpfile() {
 }
 trap remove_tmpfile EXIT
 
-$IN_NS nc -v -l localhost -p 2222 &
+$IN_NS nc -v -l 127.0.0.1 -p 2222 >/dev/null &
 $IN_NS ./main lo $tmpfile 1 &
 sleep 1
 # Generate some TCP traffic
-printf $PAYLOAD | $IN_NS nc -v localhost 2222
+printf "$PAYLOAD" | $IN_NS nc -q -v 127.0.0.1 2222
 
 for job in $(jobs -p); do
-	echo $job
 	wait $job # Wait for background jobs to finish
 done
 
