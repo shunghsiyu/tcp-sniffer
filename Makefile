@@ -2,11 +2,11 @@ CC = gcc
 
 CFLAGS = -Wall
 CFLAGS += -Wextra
-CFLAGS += $(shell pkg-config --cflags check)
 
 LDFLAGS = -lpcap
 
 TEST_CFLAGS = $(CFLAGS)
+TEST_CFLAGS += $(shell pkg-config --cflags check)
 TEST_LDFLAGS = $(LDFLAGS)
 TEST_LDFLAGS += $(shell pkg-config --libs check)
 
