@@ -517,8 +517,11 @@ START_TEST(test_packet_handler_tcp) {
 	struct pcap_pkthdr pcap_header = {
 		.caplen = sizeof(TEST_FIXTURE_TCP),
 	};
-	int retval = packet_handler(NULL, &pcap_header, (u_char *) TEST_FIXTURE_TCP, mock_data_handler);
-	ck_assert_int_eq(retval, 1);
+	struct dispatch_param param = {
+		.fd = NULL,
+		.data_handler = mock_data_handler,
+	};
+	packet_handler((void *) &param, &pcap_header, (u_char *) TEST_FIXTURE_TCP);
 } END_TEST
 
 int main(void) {

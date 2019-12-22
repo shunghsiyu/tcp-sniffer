@@ -9,9 +9,13 @@
 #include <netinet/tcp.h>
 
 typedef size_t (*data_handler_t)(const void *, size_t, size_t, FILE *);
+struct dispatch_param {
+	FILE *fd;
+	data_handler_t data_handler;
+};
 
 bool is_ipv4(const struct ether_header *eth_header);
 bool is_tcp(const struct iphdr *ip_header);
 char *end_of_ip(const struct iphdr *ip_header);
 char *tcp_payload(const struct tcphdr *tcp_header);
-int packet_handler(FILE *fd, const struct pcap_pkthdr *pcap_header, const u_char *data, data_handler_t data_handler);
+void packet_handler(u_char *fd, const struct pcap_pkthdr *pcap_header, const u_char *data);

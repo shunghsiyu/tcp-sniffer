@@ -25,26 +25,6 @@ void signal_handler(__attribute__((unused)) int sig) {
 	pcap_breakloop(handle);
 }
 
-void sniff(pcap_t *handle, FILE *fd, long int max_packets) {
-	int retval;
-	struct pcap_pkthdr *pcap_header;
-	const u_char *data;
-	long int count = 0L;
-
-	fprintf(stderr, "Start sniffing!\n");
-	while (capturing && (max_packets <= 0 || (max_packets > 0 && count < max_packets))) {
-		/* We could also use pcap_dispatch() or pcap_loop() */
-		retval = pcap_next_ex(handle, &pcap_header, &data);
-		if (retval == -2) {
-			break;
-		} else if (retval != 1) {
-			fprintf(stderr, "Failed to retrieve packet, error code: %d\n", retval);
-			return;
-		}
-		count += packet_handler(fd, pcap_header, data, fwrite);
-	}
-	fprintf(stderr, "\nStopped sniffing! Got %ld packets\n", count);
-}
 
 void install_signal_handler(void) {
 	struct sigaction signal_action = {
@@ -60,7 +40,8 @@ int main(int argc, char *argv[]) {
 	char errbuf[PCAP_ERRBUF_SIZE];
 	int linktype;
 	FILE *fd;
-	long int max_packet_count;
+	int count, max_packet_count;
+	struct dispatch_param param;
 
 	if (argc < 2) {
 		fprintf(stderr, "Please supply device name and output file!\n");
@@ -71,7 +52,8 @@ int main(int argc, char *argv[]) {
 	} else if (argc < 4) {
 		max_packet_count = -1;
 	} else {
-		max_packet_count = strtol(argv[3], NULL, 10);
+		/* TODO: handle overflow and other errors */
+		max_packet_count = (int) strtol(argv[3], NULL, 10);
 	}
 
 	dev = argv[1];
@@ -85,7 +67,7 @@ int main(int argc, char *argv[]) {
 
 	fprintf(stderr, "IP: 0x%X, Mask: 0x%X\n", ntohl(ip), ntohl(mask));
 
-	handle = pcap_open_live(dev, PCAP_BUFFER_SIZE, 0, 100, errbuf);
+	handle = pcap_open_live(dev, PCAP_BUFFER_SIZE, 0, 500, errbuf);
 	if (handle == NULL) {
 		fprintf(stderr, "%s\n", errbuf);
 		exit(1);
@@ -100,7 +82,18 @@ int main(int argc, char *argv[]) {
 
 	fd = fopen(argv[2], "wb");
 	install_signal_handler();
-	sniff(handle, fd, max_packet_count);
+
+	param.fd = fd;
+	param.data_handler = fwrite;
+	fprintf(stderr, "Start sniffing!\n");
+	count = pcap_dispatch(handle, max_packet_count, packet_handler, (void *) &param);
+	if (count == -2) {
+		fprintf(stderr, "\nCapture interrupted\n");
+	} else if (count < 0) {
+		fprintf(stderr, "Failed to retrieve packet, error code: %d\n", retval);
+		exit(1);
+	}
+	fprintf(stderr, "Stopped sniffing! Got %d packets\n", count);
 	fclose(fd);
 	pcap_close(handle);
 
