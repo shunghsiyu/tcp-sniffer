@@ -17,10 +17,12 @@
 const int PCAP_BUFFER_SIZE = 65536;
 
 static volatile sig_atomic_t capturing = 1;
+static pcap_t *handle;
 
 
 void signal_handler(__attribute__((unused)) int sig) {
 	capturing = 0;
+	pcap_breakloop(handle);
 }
 
 void sniff(pcap_t *handle, FILE *fd) {
@@ -32,7 +34,9 @@ void sniff(pcap_t *handle, FILE *fd) {
 	while (capturing) {
 		/* We could also use pcap_dispatch() or pcap_loop() */
 		retval = pcap_next_ex(handle, &pcap_header, &data);
-		if (retval != 1) {
+		if (retval == -2) {
+			break;
+		} else if (retval != 1) {
 			fprintf(stderr, "Failed to retrieve packet, error code: %d\n", retval);
 			return;
 		}
@@ -53,7 +57,6 @@ int main(int argc, char *argv[]) {
 	bpf_u_int32 ip, mask;
 	int retval;
 	char errbuf[PCAP_ERRBUF_SIZE];
-	pcap_t *handle;
 	int linktype;
 	FILE *fd;
 
