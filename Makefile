@@ -21,5 +21,8 @@ test:
 	$(CC) test_main.c helper.o -o test_main $(TEST_CFLAGS) $(TEST_LDFLAGS)
 	./test_main
 
+e2e:
+	./e2e.sh
+
 clean:
 	rm helper.o main test_main
