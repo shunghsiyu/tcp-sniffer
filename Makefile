@@ -25,11 +25,11 @@ e2e: default
 clean:
 	rm helper.o main.out test_main.out
 
-main.out: helper.o
+main.out: main.c helper.o
 	$(CC) main.c helper.o -o main.out $(CFLAGS) $(LDFLAGS)
 
-test_main.out: helper.o
+test_main.out: test_main.c helper.o
 	$(CC) test_main.c helper.o -o test_main.out $(TEST_CFLAGS) $(TEST_LDFLAGS)
 
-helper.o:
+helper.o: helper.c
 	$(CC) helper.c -c $(CFLAGS) $(LDFLAGS)
