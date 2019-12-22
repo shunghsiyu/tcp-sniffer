@@ -479,27 +479,33 @@ const char TEST_FIXTURE_TCP[] = {
 /* TODO: Test TCP packet without payload */
 
 START_TEST(test_is_ipv4_udp) {
+	/* IPv4 UDP packet should return true for is_ipv4 */
 	ck_assert(is_ipv4((struct ether_header *) TEST_FIXTURE_UDP));
 } END_TEST
 
 START_TEST(test_is_ipv4_tcp) {
+	/* IPv4 TCP packet should return true for is_ipv4 */
 	ck_assert(is_ipv4((struct ether_header *) TEST_FIXTURE_TCP));
 } END_TEST
 
 START_TEST(test_is_tcp_udp) {
+	/* IPv4 UDP packet should return false for is_tcp */
 	ck_assert(!is_tcp((struct iphdr *) (TEST_FIXTURE_UDP + 14)));
 } END_TEST
 
 START_TEST(test_is_tcp_tcp) {
+	/* IPv4 TCP packet should return false for is_tcp */
 	ck_assert(is_tcp((struct iphdr *) (TEST_FIXTURE_TCP + 14)));
 } END_TEST
 
 START_TEST(test_end_of_ip_tcp) {
+	/* end_of_ip should point to the end of IP packet */
 	const char *end = TEST_FIXTURE_TCP + 14 + 20 + 32 + 46;
 	ck_assert_ptr_eq(end_of_ip((struct iphdr *) (TEST_FIXTURE_TCP + 14)), end);
 } END_TEST
 
 START_TEST(test_tcp_payload) {
+	/* tcp_payload should point to the beginning of TCP payload content */
 	const char *data_ptr = TEST_FIXTURE_TCP + 14 + 20 + 32;
 	ck_assert_ptr_eq(data_ptr, tcp_payload((struct tcphdr *) (TEST_FIXTURE_TCP + 14 + 20)));
 } END_TEST
@@ -521,6 +527,7 @@ START_TEST(test_packet_handler_tcp) {
 		.fd = NULL,
 		.data_handler = mock_data_handler,
 	};
+	/* packet_handler should call the mock_data_handler with the TCP payload data */
 	packet_handler((void *) &param, &pcap_header, (u_char *) TEST_FIXTURE_TCP);
 } END_TEST
 
