@@ -25,7 +25,7 @@ function remove_tmpfile() {
 trap remove_tmpfile EXIT
 
 $IN_NS nc -v -l 127.0.0.1 -p 2222 >/dev/null &
-$IN_NS ./main lo $tmpfile 1 &
+$IN_NS ./main.out lo $tmpfile 1 &
 sleep 1
 # Generate some TCP traffic
 printf "$PAYLOAD" | $IN_NS nc -q -v 127.0.0.1 2222
