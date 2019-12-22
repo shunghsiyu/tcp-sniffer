@@ -6,8 +6,6 @@ IN_NS="sudo ip netns exec $NAME_SPACE"
 TIMEOUT="5s"
 PAYLOAD="aimazing"
 
-make
-
 # Setup isolated network environment for testing
 sudo ip netns add tcp-sniffer
 function remove_netns() {
@@ -25,14 +23,13 @@ function remove_tmpfile() {
 trap remove_tmpfile EXIT
 
 $IN_NS nc -v -l 127.0.0.1 -p 2222 >/dev/null &
-$IN_NS timeout 5s ./main.out lo $tmpfile &
+$IN_NS timeout -s SIGINT 5s ./main.out lo $tmpfile &
+pid=$!
 sleep 0.1
 # Generate some TCP traffic
 printf "$PAYLOAD" | $IN_NS nc -q -v 127.0.0.1 2222
 
-for job in $(jobs -p); do
-	wait $job # Wait for background jobs to finish
-done
+wait $pid || echo Timeout # Wait for packet capturing to finish or timeout
 
 if [[ "$(cat $tmpfile)" == "$PAYLOAD" ]]; then
 	echo "System Test Passed!"
