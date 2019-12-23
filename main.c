@@ -16,12 +16,10 @@
 
 const int PCAP_BUFFER_SIZE = 65536;
 
-static volatile sig_atomic_t capturing = 1;
 static pcap_t *handle;
 
 
 void signal_handler(__attribute__((unused)) int sig) {
-	capturing = 0;
 	pcap_breakloop(handle);
 }
 
