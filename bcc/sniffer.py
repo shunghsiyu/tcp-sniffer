@@ -31,10 +31,10 @@ bpf_text = """
 #include <net/tcp.h>
 #include <bcc/proto.h>
 
-#define DATA_BUFF_SIZE 4
+#define DATA_BUFF_SIZE 128
 struct data_t {
     char payload[DATA_BUFF_SIZE];
-    int size;
+    unsigned int size;
 };
 BPF_PERF_OUTPUT(tcp_payload);
 
@@ -50,20 +50,29 @@ static inline struct iphdr *skb_to_iphdr(const struct sk_buff *skb)
     return (struct iphdr *)(skb->head + skb->network_header);
 }
 
-static inline char *payload_pointer(const struct tcphdr *tcp, const u8 offset) {
-    return (char *)tcp + (offset * 4);
+static inline unsigned char *payload_pointer(const struct tcphdr *tcp, const u8 offset) {
+    return (unsigned char *)tcp + (offset * 4);
+}
+
+static inline unsigned char *tail_pointer(const struct sk_buff *skb) {
+    return skb->head + skb->tail;
 }
 
 int tcp_sniff(struct pt_regs *ctx, struct sk_buff *skb) {
-    u8 offset;
+    u8 offset = 5;
     struct tcphdr *tcp = skb_to_tcphdr(skb);
+    unsigned char *payload = NULL;
     struct data_t data;
-    char *payload;
-    int size;
+
     if (bpf_probe_read(&offset, 1, ((u_int8_t *)tcp) + 12) != 0)
         return 0;
+
     offset = offset >> 4;
     payload = payload_pointer(tcp, offset);
+    data.size = tail_pointer(skb) - payload;
+    if (data.size < 1)
+        return 0;
+
     bpf_probe_read(&data.payload, DATA_BUFF_SIZE, payload);
     tcp_payload.perf_submit(ctx, &data, sizeof(struct data_t));
     return 0;
@@ -73,7 +82,7 @@ int tcp_sniff(struct pt_regs *ctx, struct sk_buff *skb) {
 
 def print_tcp_payload(cpu, data, size):
     event = b["tcp_payload"].event(data)
-    print(event.payload)
+    print(event.size, event.payload)
 
 # initialize BPF
 b = BPF(text=bpf_text)
