@@ -27,7 +27,7 @@ $IN_NS timeout -s SIGINT 5s ./main.out lo $tmpfile &
 pid=$!
 sleep 0.1
 # Generate some TCP traffic
-printf "$PAYLOAD" | $IN_NS nc -q -v 127.0.0.1 2222
+printf "$PAYLOAD" | $IN_NS nc -q 5 -v 127.0.0.1 2222
 
 wait $pid || echo Timeout # Wait for packet capturing to finish or timeout
 
